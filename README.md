@@ -10,4 +10,4 @@ Change log
 - Remove pages & components
 - Add functional module 'todo'
 - Add pages and components into module
-- Define a new functional component with props
+- Define a new functional component with props, https://reactjs.org/docs/components-and-props.html
