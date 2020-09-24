@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface ItemProps {
-    id?: string;
-    text: string;
-}
+import { ItemProps } from './useItems';
 
 const Item: React.FC<ItemProps> = ({ id, text }) => {
   return (

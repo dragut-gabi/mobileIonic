@@ -16,3 +16,8 @@ Change log
 
 - React state & lifecycle, https://reactjs.org/docs/state-and-lifecycle.html
 - React state hook, https://reactjs.org/docs/hooks-state.html
+
+04 Custom hooks
+
+- Extract the logic & data from components
+- React custom hooks, https://reactjs.org/docs/hooks-custom.html

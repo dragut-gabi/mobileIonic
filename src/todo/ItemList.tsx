@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { add } from 'ionicons/icons';
 import Item from './Item';
 import { getLogger } from '../core';
+import { useItems } from './useItems';
 
 const log = getLogger('ItemList');
 
 const ItemList: React.FC = () => {
-  const [items, setItems] = useState([
-    { id: '1', text: 'Learn React' },
-    { id: '2', text: 'Learn Ionic' }
-  ]);
-  const addItem = () => {
-    const id = `${items.length + 1}`;
-    log('ItemList addItem');
-    setItems(items.concat({ id, text: `New item ${id}` }));
-  };
+  const { items, addItem } = useItems();
   log('ItemList render');
   return (
     <IonPage>
