@@ -11,3 +11,8 @@ Change log
 - Add functional module 'todo'
 - Add pages and components into module
 - Define a new functional component with props, https://reactjs.org/docs/components-and-props.html
+
+03 Component state
+
+- React state & lifecycle, https://reactjs.org/docs/state-and-lifecycle.html
+- React state hook, https://reactjs.org/docs/hooks-state.html
