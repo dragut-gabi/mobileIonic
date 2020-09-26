@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { RouteComponentProps } from 'react-router';
 import {
   IonContent,
   IonFab,
@@ -13,13 +14,14 @@ import {
 import { add } from 'ionicons/icons';
 import Item from './Item';
 import { getLogger } from '../core';
-import { useItems } from './useItems';
+import { ItemContext } from './ItemProvider';
 
 const log = getLogger('ItemList');
 
-const ItemList: React.FC = () => {
-  const { items, fetching, fetchingError, addItem } = useItems();
+const ItemList: React.FC<RouteComponentProps> = ({ history }) => {
+  const { items, fetching, fetchingError } = useContext(ItemContext);
   log('render');
+  console.log(items);
   return (
     <IonPage>
       <IonHeader>
@@ -31,14 +33,15 @@ const ItemList: React.FC = () => {
         <IonLoading isOpen={fetching} message="Fetching items" />
         {items && (
           <IonList>
-            {items.map(({ id, text}) => <Item key={id} text={text} />)}
+            {items.map(({ id, text}) =>
+              <Item key={id} id={id} text={text} onEdit={id => history.push(`/item/${id}`)} />)}
           </IonList>
         )}
         {fetchingError && (
           <div>{fetchingError.message || 'Failed to fetch items'}</div>
         )}
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton onClick={addItem}>
+          <IonFabButton onClick={() => history.push('/item')}>
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>

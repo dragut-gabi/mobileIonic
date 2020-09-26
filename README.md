@@ -30,3 +30,6 @@ Change log
 06 Use reducers
 
 - React reducer hook, https://reactjs.org/docs/hooks-reference.html#usereducer
+
+07 Use context
+
