@@ -21,3 +21,8 @@ Change log
 
 - Extract the logic & data from components
 - React custom hooks, https://reactjs.org/docs/hooks-custom.html
+
+05 Fetching data
+
+- Ionic list, https://ionicframework.com/docs/api/list
+- React effect hook, https://reactjs.org/docs/hooks-effect.html
