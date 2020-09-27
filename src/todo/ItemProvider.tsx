@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { ItemProps } from './ItemProps';
-import { createItem, getItems, updateItem } from './itemApi';
+import { createItem, getItems, newWebSocket, updateItem } from './itemApi';
 
 const log = getLogger('ItemProvider');
 
@@ -36,7 +36,7 @@ const SAVE_ITEM_FAILED = 'SAVE_ITEM_FAILED';
 
 const reducer: (state: ItemsState, action: ActionProps) => ItemsState =
   (state, { type, payload }) => {
-    switch(type) {
+    switch (type) {
       case FETCH_ITEMS_STARTED:
         return { ...state, fetching: true, fetchingError: null };
       case FETCH_ITEMS_SUCCEEDED:
@@ -54,7 +54,7 @@ const reducer: (state: ItemsState, action: ActionProps) => ItemsState =
         } else {
           items[index] = item;
         }
-        return { ...state,  items, saving: false };
+        return { ...state, items, saving: false };
       case SAVE_ITEM_FAILED:
         return { ...state, savingError: payload.error, saving: false };
       default:
@@ -72,6 +72,7 @@ export const ItemProvider: React.FC<ItemProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { items, fetching, fetchingError, saving, savingError } = state;
   useEffect(getItemsEffect, []);
+  useEffect(wsEffect, []);
   const saveItem = useCallback<SaveItemFn>(saveItemCallback, []);
   const value = { items, fetching, fetchingError, saving, savingError, saveItem };
   log('returns');
@@ -114,6 +115,26 @@ export const ItemProvider: React.FC<ItemProviderProps> = ({ children }) => {
     } catch (error) {
       log('saveItem failed');
       dispatch({ type: SAVE_ITEM_FAILED, payload: { error } });
+    }
+  }
+
+  function wsEffect() {
+    let canceled = false;
+    log('wsEffect - connecting');
+    const closeWebSocket = newWebSocket(message => {
+      if (canceled) {
+        return;
+      }
+      const { event, payload: { item }} = message;
+      log(`ws message, item ${event}`);
+      if (event === 'created' || event === 'updated') {
+        dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { item } });
+      }
+    });
+    return () => {
+      log('wsEffect - disconnecting');
+      canceled = true;
+      closeWebSocket();
     }
   }
 };

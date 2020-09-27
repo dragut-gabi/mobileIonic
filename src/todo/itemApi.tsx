@@ -4,8 +4,8 @@ import { ItemProps } from './ItemProps';
 
 const log = getLogger('itemApi');
 
-const baseUrl = 'http://localhost:3000';
-const itemUrl = `${baseUrl}/item`;
+const baseUrl = 'localhost:3000';
+const itemUrl = `http://${baseUrl}/item`;
 
 interface ResponseProps<T> {
   data: T;
@@ -40,4 +40,31 @@ export const createItem: (item: ItemProps) => Promise<ItemProps[]> = item => {
 
 export const updateItem: (item: ItemProps) => Promise<ItemProps[]> = item => {
   return withLogs(axios.put(`${itemUrl}/${item.id}`, item, config), 'updateItem');
+}
+
+interface MessageData {
+  event: string;
+  payload: {
+    item: ItemProps;
+  };
+}
+
+export const newWebSocket = (onMessage: (data: MessageData) => void) => {
+  const ws = new WebSocket(`ws://${baseUrl}`)
+  ws.onopen = () => {
+    log('web socket onopen');
+  };
+  ws.onclose = () => {
+    log('web socket onclose');
+  };
+  ws.onerror = error => {
+    log('web socket onerror', error);
+  };
+  ws.onmessage = messageEvent => {
+    log('web socket onmessage');
+    onMessage(JSON.parse(messageEvent.data));
+  };
+  return () => {
+    ws.close();
+  }
 }
