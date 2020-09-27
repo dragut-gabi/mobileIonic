@@ -36,7 +36,6 @@ const ItemEdit: React.FC<ItemEditProps> = ({ history, match }) => {
   }, [match.params.id, items]);
   const handleSave = () => {
     const editedItem = item ? { ...item, text } : { text };
-    console.log(editedItem);
     saveItem && saveItem(editedItem).then(() => history.goBack());
   };
   log('render');

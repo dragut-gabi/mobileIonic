@@ -107,13 +107,13 @@ export const ItemProvider: React.FC<ItemProviderProps> = ({ children }) => {
   async function saveItemCallback(item: ItemProps) {
     try {
       log('saveItem started');
-      dispatch({ type: FETCH_ITEMS_STARTED });
+      dispatch({ type: SAVE_ITEM_STARTED });
       const savedItem = await (item.id ? updateItem(item) : createItem(item));
       log('saveItem succeeded');
-      dispatch({ type: FETCH_ITEMS_SUCCEEDED, payload: { item: savedItem } });
+      dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { item: savedItem } });
     } catch (error) {
       log('saveItem failed');
-      dispatch({ type: FETCH_ITEMS_FAILED, payload: { error } });
+      dispatch({ type: SAVE_ITEM_FAILED, payload: { error } });
     }
   }
 };
