@@ -1,45 +1,19 @@
 import axios from 'axios';
-import { getLogger } from '../core';
+import { authConfig, baseUrl, getLogger, withLogs } from '../core';
 import { ItemProps } from './ItemProps';
 
-const log = getLogger('itemApi');
+const itemUrl = `http://${baseUrl}/api/item`;
 
-const baseUrl = 'localhost:3000';
-const itemUrl = `http://${baseUrl}/item`;
-
-interface ResponseProps<T> {
-  data: T;
+export const getItems: (token: string) => Promise<ItemProps[]> = token => {
+  return withLogs(axios.get(itemUrl, authConfig(token)), 'getItems');
 }
 
-function withLogs<T>(promise: Promise<ResponseProps<T>>, fnName: string): Promise<T> {
-  log(`${fnName} - started`);
-  return promise
-    .then(res => {
-      log(`${fnName} - succeeded`);
-      return Promise.resolve(res.data);
-    })
-    .catch(err => {
-      log(`${fnName} - failed`);
-      return Promise.reject(err);
-    });
+export const createItem: (token: string, item: ItemProps) => Promise<ItemProps[]> = (token, item) => {
+  return withLogs(axios.post(itemUrl, item, authConfig(token)), 'createItem');
 }
 
-const config = {
-  headers: {
-    'Content-Type': 'application/json'
-  }
-};
-
-export const getItems: () => Promise<ItemProps[]> = () => {
-  return withLogs(axios.get(itemUrl, config), 'getItems');
-}
-
-export const createItem: (item: ItemProps) => Promise<ItemProps[]> = item => {
-  return withLogs(axios.post(itemUrl, item, config), 'createItem');
-}
-
-export const updateItem: (item: ItemProps) => Promise<ItemProps[]> = item => {
-  return withLogs(axios.put(`${itemUrl}/${item.id}`, item, config), 'updateItem');
+export const updateItem: (token: string, item: ItemProps) => Promise<ItemProps[]> = (token, item) => {
+  return withLogs(axios.put(`${itemUrl}/${item._id}`, item, authConfig(token)), 'updateItem');
 }
 
 interface MessageData {
@@ -48,6 +22,8 @@ interface MessageData {
     item: ItemProps;
   };
 }
+
+const log = getLogger('ws');
 
 export const newWebSocket = (onMessage: (data: MessageData) => void) => {
   const ws = new WebSocket(`ws://${baseUrl}`)
