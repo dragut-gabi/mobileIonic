@@ -51,3 +51,7 @@ Change log
 10 Authentication - REST service & jwt
 
 - JSON Web Tokens, https://jwt.io/
+
+11 Authentication - WebSockets & jwt
+
+- Example of WS authentication, https://gist.github.com/jfromaniello/8418116

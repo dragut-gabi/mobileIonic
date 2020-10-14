@@ -17,18 +17,17 @@ export const updateItem: (token: string, item: ItemProps) => Promise<ItemProps[]
 }
 
 interface MessageData {
-  event: string;
-  payload: {
-    item: ItemProps;
-  };
+  type: string;
+  payload: ItemProps;
 }
 
 const log = getLogger('ws');
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => {
-  const ws = new WebSocket(`ws://${baseUrl}`)
+export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
+  const ws = new WebSocket(`ws://${baseUrl}`);
   ws.onopen = () => {
     log('web socket onopen');
+    ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
   };
   ws.onclose = () => {
     log('web socket onclose');
