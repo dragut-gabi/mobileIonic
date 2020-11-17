@@ -12,28 +12,28 @@ import {
   IonToolbar
 } from '@ionic/react';
 import { add } from 'ionicons/icons';
-import Item from './Item';
+import Book from './Book';
 import { getLogger } from '../core';
-import { ItemContext } from './ItemProvider';
+import { ItemContext } from './BookProvider';
 
-const log = getLogger('ItemList');
+const log = getLogger('BookList');
 
-const ItemList: React.FC<RouteComponentProps> = ({ history }) => {
+const BookList: React.FC<RouteComponentProps> = ({ history }) => {
   const { items, fetching, fetchingError } = useContext(ItemContext);
   log('render');
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Item List</IonTitle>
+          <IonTitle>Book List</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
         <IonLoading isOpen={fetching} message="Fetching items"/>
         {items && (
           <IonList>
-            {items.map(({ _id, text }) =>
-              <Item key={_id} _id={_id} text={text} onEdit={id => history.push(`/item/${id}`)}/>)}
+            {items.map(({ _id, title,pages,sold, releaseDate}) =>
+              <Book key={_id} _id={_id} title={title} pages={pages} sold={sold} releaseDate={releaseDate} onEdit={id => history.push(`/item/${id}`)}/>)}
           </IonList>
         )}
         {fetchingError && (
@@ -49,4 +49,4 @@ const ItemList: React.FC<RouteComponentProps> = ({ history }) => {
   );
 };
 
-export default ItemList;
+export default BookList;
