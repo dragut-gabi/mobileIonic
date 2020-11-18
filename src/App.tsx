@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ItemEdit, ItemList } from './book';
+import { BookEdit, BookList } from './book';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -25,6 +25,7 @@ import './theme/variables.css';
 import { BookProvider } from './book/BookProvider';
 import { AuthProvider, Login, PrivateRoute } from './auth';
 
+
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
@@ -32,11 +33,11 @@ const App: React.FC = () => (
         <AuthProvider>
           <Route path="/login" component={Login} exact={true}/>
           <BookProvider>
-            <PrivateRoute path="/items" component={ItemList} exact={true}/>
-            <PrivateRoute path="/item" component={ItemEdit} exact={true}/>
-            <PrivateRoute path="/item/:id" component={ItemEdit} exact={true}/>
+            <PrivateRoute path="/books" component={BookList} exact={true}/>
+            <PrivateRoute path="/book" component={BookEdit} exact={true}/>
+            <PrivateRoute path="/book/:id" component={BookEdit} exact={true}/>
           </BookProvider>
-          <Route exact path="/" render={() => <Redirect to="/items"/>}/>
+          <Route exact path="/" render={() => <Redirect to="/books"/>}/>
         </AuthProvider>
       </IonRouterOutlet>
     </IonReactRouter>

@@ -2,24 +2,24 @@ import React, { useCallback, useContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { BookProps } from './BookProps';
-import {createItem, deleteItemApi, getItems, newWebSocket, updateItem} from './bookApi';
+import { createBook, getBooks, newWebSocket, updateBook, deleteBookApi } from './BookApi';
 import { AuthContext } from '../auth';
 
 const log = getLogger('BookProvider');
 
-type SaveItemFn = (item: BookProps) => Promise<any>;
-type DeleteItemFn = (item: BookProps) =>Promise<any>;
+type SaveBookFn = (book: BookProps) => Promise<any>
+type DeleteBookFn = (book: BookProps) => Promise<any>
 
-export interface ItemsState {
-  items?: BookProps[],
+export interface BooksState {
+  books?: BookProps[],
   fetching: boolean,
   fetchingError?: Error | null,
   saving: boolean,
+  deleting: boolean,
   savingError?: Error | null,
-  saveItem?: SaveItemFn,
-  deleteItem?: DeleteItemFn,
-  deleting:boolean,
-  deletingError?: Error | null
+  deletingError?: Error | null,
+  saveBook?: SaveBookFn,
+  deleteBook?: DeleteBookFn
 }
 
 interface ActionProps {
@@ -27,134 +27,134 @@ interface ActionProps {
   payload?: any,
 }
 
-const initialState: ItemsState = {
+const initialState: BooksState = {
   fetching: false,
   saving: false,
   deleting: false
 };
 
-const FETCH_ITEMS_STARTED = 'FETCH_ITEMS_STARTED';
-const FETCH_ITEMS_SUCCEEDED = 'FETCH_ITEMS_SUCCEEDED';
-const FETCH_ITEMS_FAILED = 'FETCH_ITEMS_FAILED';
-const SAVE_ITEM_STARTED = 'SAVE_ITEM_STARTED';
-const SAVE_ITEM_SUCCEEDED = 'SAVE_ITEM_SUCCEEDED';
-const SAVE_ITEM_FAILED = 'SAVE_ITEM_FAILED';
-const DELETE_ITEM_STARTED = 'DELETE_ITEM_STARTED';
-const DELETE_ITEM_SUCCEDED = 'DELETE_ITEM_SUCCEDED';
-const DELETE_ITEM_FAILED = 'DELETE_ITEM_FAILED';
+const FETCH_BOOKS_STARTED = 'FETCH_BOOKS_STARTED';
+const FETCH_BOOKS_SUCCEEDED = 'FETCH_BOOKS_SUCCEEDED';
+const FETCH_BOOKS_FAILED = 'FETCH_BOOKS_FAILED';
+const SAVE_BOOK_STARTED = 'SAVE_BOOK_STARTED';
+const SAVE_BOOK_SUCCEEDED = 'SAVE_BOOK_SUCCEEDED';
+const SAVE_BOOK_FAILED = 'SAVE_BOOK_FAILED';
+const DELETE_BOOK_STARTED = 'DELETE_BOOK_STARTED'
+const DELETE_BOOK_SUCCEEDED = 'DELETE_BOOK_SUCCEEDED'
+const DELETE_BOOK_FAILED = 'DELETE_BOOK_FAILED'
 
-const reducer: (state: ItemsState, action: ActionProps) => ItemsState =
-  (state, { type, payload }) => {
-    switch (type) {
-      case FETCH_ITEMS_STARTED:
-        return { ...state, fetching: true, fetchingError: null };
-      case FETCH_ITEMS_SUCCEEDED:
-        return { ...state, items: payload.items, fetching: false };
-      case FETCH_ITEMS_FAILED:
-        return { ...state, fetchingError: payload.error, fetching: false };
-      case SAVE_ITEM_STARTED:
-        return { ...state, savingError: null, saving: true };
-      case SAVE_ITEM_SUCCEEDED:{
-        const items = [...(state.items || [])];
-        const item = payload.item;
-        const index = items.findIndex(it => it._id === item._id);
-        if (index === -1) {
-          items.splice(0, 0, item);
-        } else {
-          items[index] = item;
+const reducer: (state: BooksState, action: ActionProps) => BooksState =
+    (state, { type, payload }) => {
+      switch (type) {
+        case FETCH_BOOKS_STARTED:
+          return { ...state, fetching: true, fetchingError: null };
+        case FETCH_BOOKS_SUCCEEDED:
+          return { ...state, books: payload.books, fetching: false };
+        case FETCH_BOOKS_FAILED:
+          return { ...state, fetchingError: payload.error, fetching: false };
+        case SAVE_BOOK_STARTED:
+          return { ...state, savingError: null, saving: true };
+        case SAVE_BOOK_SUCCEEDED:
+          const books = [...(state.books || [])];
+          const book = payload.book;
+          const index = books.findIndex(it => it._id === book._id);
+          if (index === -1) {
+            books.splice(0, 0, book);
+          } else {
+            books[index] = book;
+          }
+          return { ...state, books, saving: false };
+        case SAVE_BOOK_FAILED:
+          return { ...state, savingError: payload.error, saving: false };
+        case DELETE_BOOK_STARTED:
+          return { ...state, deletingError: null, deleting: true }
+        case DELETE_BOOK_SUCCEEDED: {
+          const books = [...(state.books || [])]
+          const book = payload.book
+          const index = books.findIndex(it => it._id === book._id)
+          books.splice(index, 1)
+          return { ...state, books, deleting: false }
         }
-        return { ...state, items, saving: false };
+        case DELETE_BOOK_FAILED: {
+          return { ...state, deletingError: payload.error, deleting: false }
+        }
+        default:
+          return state;
       }
-      case SAVE_ITEM_FAILED:
-        return { ...state, savingError: payload.error, saving: false };
-      case DELETE_ITEM_STARTED:
-        return { ...state, deletingError: null, deleting: true};
-      case DELETE_ITEM_FAILED:
-        return { ...state, deletingError: payload.error,deleting: false}
-      case DELETE_ITEM_SUCCEDED: {
-        const items = [...(state.items || [])];
-        const item = payload.item;
-        const index = items.findIndex(it => it._id === item._id);
-        items.splice(index, 1)
-        return {...state,items,deleting:false}
-      }
-      default:
-        return state;
-    }
-  };
+    };
 
-export const ItemContext = React.createContext<ItemsState>(initialState);
+export const BookContext = React.createContext<BooksState>(initialState);
 
-interface ItemProviderProps {
+interface BookProviderProps {
   children: PropTypes.ReactNodeLike,
 }
 
-export const BookProvider: React.FC<ItemProviderProps> = ({ children }) => {
+export const BookProvider: React.FC<BookProviderProps> = ({ children }) => {
   const { token } = useContext(AuthContext);
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { items, fetching, fetchingError, saving, savingError, deleting,deletingError } = state;
-  useEffect(getItemsEffect, [token]);
+  const { books, fetching, fetchingError, saving, savingError, deleting, deletingError } = state;
+  useEffect(getBooksEffect, [token]);
   useEffect(wsEffect, [token]);
-  const saveItem = useCallback<SaveItemFn>(saveItemCallback, [token]);
-  const deleteItem = useCallback<DeleteItemFn>(deleteItemCallback, [token]);
-  const value = { items, fetching, fetchingError, saving, savingError, saveItem,deleteItem,deleting,deletingError };
+  const saveBook = useCallback<SaveBookFn>(saveBookCallback, [token]);
+  const deleteBook = useCallback<DeleteBookFn>(deleteBookCallback, [token]);
+  const value = { books, fetching, fetchingError, saving, savingError, saveBook, deleting, deleteBook, deletingError };
   log('returns');
   return (
-    <ItemContext.Provider value={value}>
-      {children}
-    </ItemContext.Provider>
+      <BookContext.Provider value={value}>
+        {children}
+      </BookContext.Provider>
   );
 
-  function getItemsEffect() {
+  function getBooksEffect() {
     let canceled = false;
-    fetchItems();
+    fetchBooks();
     return () => {
       canceled = true;
     }
 
-    async function fetchItems() {
+    async function fetchBooks() {
       if (!token?.trim()) {
         return;
       }
       try {
-        log('fetchItems started');
-        dispatch({ type: FETCH_ITEMS_STARTED });
-        const items = await getItems(token);
-        log('fetchItems succeeded');
+        log('fetchBooks started');
+        dispatch({ type: FETCH_BOOKS_STARTED });
+        const books = await getBooks(token);
+        log('fetchBooks succeeded');
         if (!canceled) {
-          dispatch({ type: FETCH_ITEMS_SUCCEEDED, payload: { items } });
+          dispatch({ type: FETCH_BOOKS_SUCCEEDED, payload: { books } });
         }
       } catch (error) {
-        log('fetchItems failed');
-        dispatch({ type: FETCH_ITEMS_FAILED, payload: { error } });
+        log('fetchBooks failed');
+        dispatch({ type: FETCH_BOOKS_FAILED, payload: { error } });
       }
     }
   }
 
-  async function saveItemCallback(item: BookProps) {
+  async function saveBookCallback(book: BookProps) {
     try {
-      log('saveItem started');
-      dispatch({ type: SAVE_ITEM_STARTED });
-      const savedItem = await (item._id ? updateItem(token, item) : createItem(token, item));
-      log('saveItem succeeded');
-      dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { item: savedItem } });
+      log('saveBook started');
+      dispatch({ type: SAVE_BOOK_STARTED });
+      const savedBook = await (book._id ? updateBook(token, book) : createBook(token, book));
+      log('saveBook succeeded');
+      dispatch({ type: SAVE_BOOK_SUCCEEDED, payload: { book: savedBook } });
     } catch (error) {
-      log('saveItem failed');
-      dispatch({ type: SAVE_ITEM_FAILED, payload: { error } });
+      log('saveBook failed');
+      dispatch({ type: SAVE_BOOK_FAILED, payload: { error } });
     }
   }
 
-  async function deleteItemCallback(item: BookProps){
-    try{
-      log('deleteItem started');
-      dispatch({type: DELETE_ITEM_STARTED});
-      const deleteItem = await deleteItemApi(token,item);
-      log("delete succeded");
-      console.log(deleteItem);
-      dispatch({type: DELETE_ITEM_SUCCEDED, payload:{item:deleteItem}});
-    }catch (error){
+  async function deleteBookCallback(book: BookProps) {
+    try {
+      log("delete started");
+      dispatch({ type: DELETE_BOOK_STARTED });
+      const deletedBook = await deleteBookApi(token, book);
+      log("delete succeeded");
+      console.log(deletedBook);
+      dispatch({ type: DELETE_BOOK_SUCCEEDED, payload: { book: book } });
+    } catch (error) {
       log("delete failed");
-      dispatch({type: DELETE_ITEM_FAILED,payload: {error}});
+      dispatch({ type: DELETE_BOOK_FAILED, payload: { error } });
     }
   }
 
@@ -167,13 +167,10 @@ export const BookProvider: React.FC<ItemProviderProps> = ({ children }) => {
         if (canceled) {
           return;
         }
-        const { type, payload: item } = message;
-        log(`ws message, item ${type}`);
-        if (type === 'created' || type === 'updated' ) {
-          //dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { item } });
-        }
-        if (type === 'deleted') {
-          //dispatch({ type: DELETE_ITEM_SUCCEDED, payload: { item } });
+        const { type, payload: book } = message;
+        log(`ws message, book ${type}`);
+        if (type === 'created' || type === 'updated') {
+          dispatch({ type: SAVE_BOOK_SUCCEEDED, payload: { book } });
         }
       });
     }
