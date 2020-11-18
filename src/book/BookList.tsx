@@ -16,7 +16,7 @@ import {
   IonInfiniteScrollContent,
   IonSelect,
   IonSelectOption,
-  IonSearchbar,
+  IonSearchbar, IonList,
 } from '@ionic/react';
 import { add } from 'ionicons/icons';
 import Book from './Book';
@@ -33,9 +33,9 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
   const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(
       false
   );
-  const [filter, setFilter] = useState<string | undefined>(undefined);
+  const [filter, setFilter] = useState<string | undefined>("all");
   const [search, setSearch] = useState<string>("");
-  const [pos, setPos] = useState(3);
+  const [pos, setPos] = useState(9);
   const selectOptions = ["sold", "not sold"];
   const [booksShow, setBooksShow] = useState<BookProps[]>([]);
   const { logout } = useContext(AuthContext);
@@ -45,30 +45,48 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
   };
   useEffect(() => {
     if (books?.length) {
-      setBooksShow(books.slice(0, 3));
+      setBooksShow(books.slice(0, 9));
     }
   }, [books]);
+
+
   log("render");
+
+  function wait(){
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  }
+
   async function searchNext($event: CustomEvent<void>) {
     if (books && pos < books.length) {
+      console.log(pos,books.length);
+      await wait();
       setBooksShow([...booksShow, ...books.slice(pos, 3 + pos)]);
       setPos(pos + 3);
     } else {
       setDisableInfiniteScroll(true);
     }
-    ($event.target as HTMLIonInfiniteScrollElement).complete();
+
+    await ($event.target as HTMLIonInfiniteScrollElement).complete();
   }
 
   useEffect(() => {
-    if (filter && books) {
+    if (filter!="all" && books) {
       const boolType = filter === "sold";
-      setBooksShow(books.filter((book) => book.sold == boolType));
+      setBooksShow(books.filter((book) => book.sold == boolType).slice(0,9));
+    }
+    else if(books){
+      setBooksShow(books.slice(0,9))
     }
   }, [filter]);
 
   useEffect(() => {
     if (!search && books) {
-      setBooksShow(books)
+      setBooksShow(books.slice(0,9));
+      setPos(9)
     }
     else if (search && books) {
       setBooksShow(books.filter((book) => book.title.toLowerCase().includes(search)));
@@ -85,10 +103,10 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
         <IonContent fullscreen>
           <IonLoading isOpen={fetching} message="Fetching books" />
           <IonSearchbar
-              value={search}
-              debounce={1000}
-              onIonChange={(e) => setSearch(e.detail.value!)}
-          ></IonSearchbar>
+    value={search}
+    debounce={1000}
+    onIonChange={(e) => setSearch(e.detail.value!)}
+    />
           <IonSelect
               value={filter}
               placeholder="Select sold status"
@@ -98,8 +116,11 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
                 <IonSelectOption key={option} value={option}>
                   {option}
                 </IonSelectOption>
-            ))}
+            ))
+            }
+            <IonSelectOption key={"all"} value={"all"}>{"all"}</IonSelectOption>
           </IonSelect>
+
           {booksShow &&
           booksShow.map((book: BookProps) => {
             return (
@@ -119,7 +140,7 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
               disabled={disableInfiniteScroll}
               onIonInfinite={(e: CustomEvent<void>) => searchNext(e)}
           >
-            <IonInfiniteScrollContent loadingText="Loading more books..."></IonInfiniteScrollContent>
+            <IonInfiniteScrollContent loadingSpinner="bubbles" loadingText="Loading more books..."/>
           </IonInfiniteScroll>
           {fetchingError && (
               <div>{fetchingError.message || "Failed to fetch books"}</div>

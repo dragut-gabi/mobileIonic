@@ -170,7 +170,7 @@ export const BookProvider: React.FC<BookProviderProps> = ({ children }) => {
         const { type, payload: book } = message;
         log(`ws message, book ${type}`);
         if (type === 'created' || type === 'updated') {
-          dispatch({ type: SAVE_BOOK_SUCCEEDED, payload: { book } });
+          //dispatch({ type: SAVE_BOOK_SUCCEEDED, payload: { book } });
         }
       });
     }
