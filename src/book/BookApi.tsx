@@ -27,10 +27,15 @@ export const getBooks: (token: string) => Promise<BookProps[]> = token => {
   return withLogs(result, "getBooks");
 }
 
+export const getBook:(token:string,id:string)=>Promise<BookProps>=(token,id)=>{
+  var result= axios.get(`${bookUrl}/${id}`,authConfig(token))
+  return withLogs(result, "getBook");
+}
+
 export const createBook: (
     token: string,
     book: BookProps
-) => Promise<BookProps[]> = (token, book) => {
+) => Promise<BookProps> = (token, book) => {
   const result = axios.post(bookUrl, book, authConfig(token));
   result.then(async function (r) {
     const book = r.data;
@@ -51,7 +56,7 @@ export const createBook: (
 export const updateBook: (
     token: string,
     book: BookProps
-) => Promise<BookProps[]> = (token, book) => {
+) => Promise<BookProps> = (token, book) => {
   const result = axios.put(`${bookUrl}/${book._id}`, book, authConfig(token));
   result.then(async function (r) {
     const book = r.data;
@@ -103,6 +108,7 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
     log('web socket onmessage');
     onMessage(JSON.parse(messageEvent.data));
   };
+
   return () => {
     ws.close();
   }

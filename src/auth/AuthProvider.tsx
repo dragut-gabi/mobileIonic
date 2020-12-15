@@ -16,7 +16,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   login?: LoginFn;
-  logout?: LogoutFn
+  logout?: LogoutFn;
   pendingAuthentication?: boolean;
   username?: string;
   password?: string;
