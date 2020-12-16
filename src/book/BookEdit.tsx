@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import {
+  IonActionSheet,
   IonButton,
   IonButtons,
   IonCheckbox,
   IonContent,
-  IonDatetime,
-  IonHeader,
+  IonDatetime, IonFab, IonFabButton,
+  IonHeader, IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -14,13 +15,20 @@ import {
   IonTitle,
   IonToolbar
 } from '@ionic/react';
+import { camera, trash, close } from "ionicons/icons";
 import { getLogger } from '../core';
 import { BookContext } from './BookProvider';
 import { RouteComponentProps } from 'react-router';
 import { BookProps } from './BookProps';
 import { useNetwork } from "../utils/useNetwork";
+import { Photo, usePhotoGallery } from "../utils/usePhotoGallery";
+import { PhotoViewer } from "@ionic-native/photo-viewer";
+import { MyMap } from "../utils/MyMap";
 
 const log = getLogger('ItemEdit');
+function mapLog(source: string){
+  return (e:any) => console.log(source, e.latLng.lat(), e.latLng.lng());
+}
 
 interface BookEditProps extends RouteComponentProps<{
   id?: string;
@@ -32,9 +40,15 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
   const [pages, setPages] = useState(0);
   const [sold, setSold] = useState(false)
   const [releaseDate, setReleaseDate] = useState('')
+  const [photoPath, setPhotoPath] = useState("");
+  const [latitude, setLatitude] = useState(46.7533824);
+  const [longitude, setLongitude] = useState(23.5831296);
   const [book, setBook] = useState<BookProps>();
   const [bookV2, setBookV2] = useState<BookProps>()
   const {networkStatus}=useNetwork();
+
+  const { photos, takePhoto, deletePhoto } = usePhotoGallery();
+  const [photoToDelete, setPhotoToDelete] = useState<Photo>();
 
   useEffect(() => {
     log('useEffect');
@@ -46,6 +60,9 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
       setPages(book.pages);
       setSold(book.sold)
       setReleaseDate(book.releaseDate)
+      setPhotoPath(book.photoPath);
+      if (book.latitude) setLatitude(book.latitude);
+      if (book.longitude) setLongitude(book.longitude);
       getServerItem && getServerItem(match.params.id!, book?.version)
     }
   }, [match.params.id, books, getServerItem]);
@@ -53,10 +70,10 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
   useEffect(() => {
     setBookV2(oldBook)
     log('SET OLD BOOK: ' + JSON.stringify(oldBook))
-  })
+  },[oldBook])
 
   const handleSave = () => {
-    const editedBook = book ? { ...book, title, pages, sold, releaseDate, status: 0, version: book.version ? book.version + 1 : 1 } : { title, pages, sold, releaseDate, status: 0, version: 1 };
+    const editedBook = book ? { ...book, title, pages, sold, releaseDate, status: 0, version: book.version ? book.version + 1 : 1, photoPath, latitude, longitude } : { title, pages, sold, releaseDate, status: 0, version: 1, photoPath, latitude, longitude };
     saveBook && saveBook(editedBook, networkStatus.connected).then(() => {
       log(JSON.stringify(bookV2))
       if (bookV2 === undefined) history.goBack()
@@ -64,8 +81,13 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
   }
 
   const handleDelete = () => {
-    const deletedBook = book ? { ...book, title, pages, sold, releaseDate, status: 0, version: 0 } : { title, pages, sold, releaseDate, status: 0, version: 0 }
+    const deletedBook = book ? { ...book, title, pages, sold, releaseDate, status: 0, version: 0, photoPath, latitude, longitude } : { title, pages, sold, releaseDate, status: 0, version: 0, photoPath, latitude, longitude }
     deleteBook && deleteBook(deletedBook, networkStatus.connected).then(() => history.goBack())
+  }
+
+  const setMapPosition = (e: any) => {
+    setLatitude(e.latLng.lat());
+    setLongitude(e.latLng.lng());
   }
 
   const handleConflict1 = () => {
@@ -78,6 +100,9 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
         releaseDate,
         status: 0,
         version: oldBook?.version + 1,
+        photoPath,
+        latitude,
+        longitude
       };
       saveBook &&
       saveBook(editedBook, networkStatus.connected).then(() => {
@@ -95,6 +120,9 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
         releaseDate: oldBook?.releaseDate,
         status: oldBook?.status,
         version: oldBook?.version + 1,
+        photoPath,
+        latitude,
+        longitude
       };
       saveBook &&
       editedBook &&
@@ -141,6 +169,17 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
             <IonLabel>Release Date: </IonLabel>
             <IonDatetime value={releaseDate} onIonChange={e => setReleaseDate(e.detail.value?.split("T")[0]!)}></IonDatetime>
           </IonItem>
+          <img src={photoPath} />
+          <MyMap
+              lat={latitude}
+              lng={longitude}
+              onMapClick={setMapPosition
+                /*(location: any) => {
+                setLatitude(location.latLng.lat());
+                setLongitude(location.latLng.lng());
+              }*/}
+              onMarkerClick={mapLog('onMarker')}
+          />
           {bookV2 && (
               <>
                 <IonItem>
@@ -166,6 +205,40 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
           {savingError && (
               <div>{savingError.message || 'Failed to save book'}</div>
           )}
+          <IonFab vertical="bottom" horizontal="center" slot="fixed">
+            <IonFabButton
+                onClick={() => {
+                  const photoTaken = takePhoto();
+                  photoTaken.then((data) => {
+                    setPhotoPath(data.webviewPath!);
+                  });
+                }}
+            >
+              <IonIcon icon={camera} />
+            </IonFabButton>
+          </IonFab>
+          <IonActionSheet
+              isOpen={!!photoToDelete}
+              buttons={[
+                {
+                  text: "Delete",
+                  role: "destructive",
+                  icon: trash,
+                  handler: () => {
+                    if (photoToDelete) {
+                      deletePhoto(photoToDelete);
+                      setPhotoToDelete(undefined);
+                    }
+                  },
+                },
+                {
+                  text: "Cancel",
+                  icon: close,
+                  role: "cancel",
+                },
+              ]}
+              onDidDismiss={() => setPhotoToDelete(undefined)}
+          />
         </IonContent>
       </IonPage>
   );

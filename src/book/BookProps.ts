@@ -6,5 +6,7 @@ export interface BookProps {
   releaseDate: string
   version: number
   status: number
-
+  photoPath: string;
+  latitude:number;
+  longitude:number;
 }

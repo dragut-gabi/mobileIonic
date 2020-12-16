@@ -144,6 +144,9 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
                     releaseDate={book.releaseDate}
                     status = {book.status}
                     version = {book.version}
+                    photoPath={book.photoPath}
+                    latitude={book.latitude}
+                    longitude={book.longitude}
                     onEdit={(id) => history.push(`/book/${id}`)}
                 />
             );
