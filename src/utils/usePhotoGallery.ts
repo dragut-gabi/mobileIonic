@@ -1,5 +1,5 @@
 import { useCamera } from '@ionic/react-hooks/camera';
-import { CameraPhoto, CameraResultType, CameraSource, FilesystemDirectory } from '@capacitor/core';
+import { Plugins, CameraPhoto, CameraResultType, CameraSource, FilesystemDirectory } from '@capacitor/core';
 import { useEffect, useState } from 'react';
 import { base64FromPath, useFilesystem } from '@ionic/react-hooks/filesystem';
 import { useStorage } from '@ionic/react-hooks/storage';
@@ -8,7 +8,7 @@ export interface Photo {
     filepath: string;
     webviewPath?: string;
 }
-
+const {Camera} = Plugins
 const PHOTO_STORAGE = 'photos';
 
 export function usePhotoGallery() {

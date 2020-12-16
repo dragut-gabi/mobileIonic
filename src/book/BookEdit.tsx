@@ -6,7 +6,7 @@ import {
   IonCheckbox,
   IonContent,
   IonDatetime, IonFab, IonFabButton,
-  IonHeader, IonIcon,
+  IonHeader, IonIcon, IonImg,
   IonInput,
   IonItem,
   IonLabel,
@@ -83,11 +83,6 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
   const handleDelete = () => {
     const deletedBook = book ? { ...book, title, pages, sold, releaseDate, status: 0, version: 0, photoPath, latitude, longitude } : { title, pages, sold, releaseDate, status: 0, version: 0, photoPath, latitude, longitude }
     deleteBook && deleteBook(deletedBook, networkStatus.connected).then(() => history.goBack())
-  }
-
-  const setMapPosition = (e: any) => {
-    setLatitude(e.latLng.lat());
-    setLongitude(e.latLng.lng());
   }
 
   const handleConflict1 = () => {
@@ -169,15 +164,20 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
             <IonLabel>Release Date: </IonLabel>
             <IonDatetime value={releaseDate} onIonChange={e => setReleaseDate(e.detail.value?.split("T")[0]!)}></IonDatetime>
           </IonItem>
-          <img src={photoPath} />
+          {/*<img src={photoPath} />*/}
+          <IonImg style={{width: "400px", height: "400px", margin: "0 auto"}} alt={"No photo"}
+                  onClick = {() => {
+                    setPhotoToDelete(photos?.find(vd => vd.webviewPath === photoPath))
+                  }}
+                  src={photoPath}
+          />
           <MyMap
               lat={latitude}
               lng={longitude}
-              onMapClick={setMapPosition
-                /*(location: any) => {
+              onMapClick={(location: any) => {
                 setLatitude(location.latLng.lat());
                 setLongitude(location.latLng.lng());
-              }*/}
+              }}
               onMarkerClick={mapLog('onMarker')}
           />
           {bookV2 && (
@@ -228,6 +228,7 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
                     if (photoToDelete) {
                       deletePhoto(photoToDelete);
                       setPhotoToDelete(undefined);
+                      setPhotoPath("")
                     }
                   },
                 },

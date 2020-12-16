@@ -5,9 +5,17 @@ import { BookProps } from './BookProps';
 import {createBook, getBooks, newWebSocket, updateBook, deleteBookApi, getBook} from './BookApi';
 import { AuthContext } from '../auth';
 import {Plugins} from "@capacitor/core";
+//import { Dialogs } from '@ionic-native/dialogs/ngx';
+
 const { Storage } = Plugins;
 
+
 const log = getLogger('BookProvider');
+
+function openMyDialog() {
+  let myDialog:any = document.getElementById("myDialog");
+    myDialog.showModal();
+    }
 
 type SaveBookFn = (book: BookProps,connected:boolean) => Promise<any>
 type DeleteBookFn = (book: BookProps,connected:boolean) => Promise<any>
@@ -289,6 +297,8 @@ export const BookProvider: React.FC<BookProviderProps> = ({ children }) => {
       if (book._id === undefined) {
         book._id = random_id();
         book.status = 1;
+        //openMyDialog()
+        //Dialogs.caller("hello")
         alert("Book saved locally");
       } else {
         book.status = 2;
