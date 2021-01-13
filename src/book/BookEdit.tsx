@@ -16,6 +16,7 @@ import {
   IonToolbar
 } from '@ionic/react';
 import { camera, trash, close } from "ionicons/icons";
+import { createAnimation } from "@ionic/react";
 import { getLogger } from '../core';
 import { BookContext } from './BookProvider';
 import { RouteComponentProps } from 'react-router';
@@ -127,6 +128,27 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
     }
   };
 
+  function chainAnimations() {
+    const elB = document.querySelector('.bookTitle');
+    const elC = document.querySelector('.bookPages');
+    if (elB && elC) {
+      const animationA = createAnimation()
+          .addElement(elB)
+          .duration(5000)
+          .fromTo('transform', 'rotate(0)', 'rotate(45deg)');
+
+      const animationB = createAnimation()
+          .addElement(elC)
+          .duration(7000)
+          .fromTo('transform', 'scale(1)', 'scale(0.8)');
+      (async () => {
+        await animationA.play();
+        await animationB.play();
+      })();
+    }
+  }
+  useEffect(chainAnimations, []);
+
 
   log('render');
   return (
@@ -146,11 +168,15 @@ const BookEdit: React.FC<BookEditProps> = ({ history, match }) => {
         </IonHeader>
         <IonContent>
           <IonItem>
+            <div className="bookTitle">
             <IonLabel>Title: </IonLabel>
+            </div>
             <IonInput value={title} onIonChange={e => setTitle(e.detail.value || '')} />
           </IonItem>
           <IonItem>
+            <div className="bookPages">
             <IonLabel>Pages: </IonLabel>
+            </div>
             <IonInput value={pages} onIonChange={e => setPages(Number(e.detail.value))} />
           </IonItem>
           <IonItem>

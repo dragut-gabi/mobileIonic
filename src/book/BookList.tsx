@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { createAnimation } from "@ionic/react";
 import { RouteComponentProps } from 'react-router';
 import { Redirect } from 'react-router-dom';
 import {
@@ -102,22 +103,66 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
       setBooksShow(books.filter((book) => book.title.toLowerCase().includes(search)));
     }
   }, [search]);
+
+
+  function simpleAnimation() {
+    const el = document.querySelector(".networkStatus");
+    if (el) {
+      const animation = createAnimation()
+          .addElement(el)
+          .duration(1000)
+          .direction("alternate")
+          .iterations(Infinity)
+          .keyframes([
+            { offset: 0, transform: "scale(1)", opacity: "1" },
+            {
+              offset: 1,
+              transform: "scale(0.5)",
+              opacity: "0.5",
+            },
+          ]);
+      animation.play();
+    }
+  }
+  useEffect(simpleAnimation, []);
+  function groupAnimations() {
+    const elB = document.querySelector('.searchBar');
+    const elC = document.querySelector('.select');
+    if (elB && elC) {
+      const animationA = createAnimation()
+          .addElement(elB)
+          .fromTo('transform', 'scale(1)','scale(0.75)');
+      const animationB = createAnimation()
+          .addElement(elC)
+          .fromTo('transform', 'rotate(0)', 'rotate(180deg)');
+      const parentAnimation = createAnimation()
+          .duration(10000)
+          .addAnimation([animationA, animationB]);
+      parentAnimation.play();    }
+  }
+  useEffect(groupAnimations, []);
+
   return (
       <IonPage>
         <IonHeader>
           <IonToolbar>
             <IonTitle>Book List</IonTitle>
             <IonButton onClick={handleLogout}>Logout</IonButton>
-            <div>Network is {networkStatus.connected ? "online" : "offline"}</div>
+            <div className="networkStatus">
+              Network is {networkStatus.connected ? "online" : "offline"}
+            </div>
           </IonToolbar>
         </IonHeader>
         <IonContent fullscreen>
           <IonLoading isOpen={fetching} message="Fetching books" />
+          <div className="searchBar">
           <IonSearchbar
-    value={search}
-    debounce={1000}
-    onIonChange={(e) => setSearch(e.detail.value!)}
-    />
+            value={search}
+            debounce={1000}
+            onIonChange={(e) => setSearch(e.detail.value!)}
+          />
+          </div>
+          <div className="select">
           <IonSelect
               value={filter}
               placeholder="Select sold status"
@@ -131,6 +176,7 @@ const BookList: React.FC<RouteComponentProps> = ({ history }) => {
             }
             <IonSelectOption key={"all"} value={"all"}>{"all"}</IonSelectOption>
           </IonSelect>
+          </div>
 
           {booksShow &&
           booksShow.map((book: BookProps) => {
